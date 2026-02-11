@@ -1,0 +1,38 @@
+package handlers
+
+import (
+	"encoding/json"
+	"fmt"
+	"juel-ratings-api/internal/store"
+	"log"
+	"net/http"
+)
+
+type TeamsServer struct {
+	Store *store.Store
+}
+
+func (ts *TeamsServer) GetAllTeamsHandler() http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		log.Printf("GET /teams request received")
+		teams, err := ts.Store.GetAllTeams()
+		if err != nil {
+			log.Printf("Error fetching teams: %v", err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		if err := json.NewEncoder(w).Encode(teams); err != nil {
+			log.Printf("Error encoding teams to JSON: %v", err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		log.Printf("Successfully returned %d teams", len(teams))
+	})
+}
+
+func (ts *TeamsServer) GetTeamByIDHandler() http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintln(w, "Team by Id")
+	})
+}
