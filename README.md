@@ -12,7 +12,6 @@ This Go-based API provides endpoints for accessing college football team data, i
 - **Database**: SQLite
 - **Database Driver**: mattn/go-sqlite3
 - **Architecture**: Clean architecture with separate store and handler packages
-- **Version Control**: Jujutsu (jj) with Git backend
 
 ## Project Structure
 
