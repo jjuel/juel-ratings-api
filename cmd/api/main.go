@@ -8,9 +8,10 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
 
-	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/joho/godotenv"
+	_ "github.com/mattn/go-sqlite3"
 )
 
 func main() {
@@ -37,19 +38,48 @@ func somethingHandler() http.Handler {
 }
 
 func dbConnect(url string) *sql.DB {
-	db, err := sql.Open("pgx", url)
+	db, err := sql.Open("sqlite3", url)
 	if err != nil {
-		log.Fatal("Error opening Postgres connection.")
+		log.Fatal("Error opening Sqlite connection.")
 	}
 
 	return db
 }
 
 func getDatabaseURL() string {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
+	loadDotEnv()
+
+	databaseURL := os.Getenv("DATABASE_URL")
+	if databaseURL == "" {
+		log.Fatal("DATABASE_URL is not set")
 	}
 
-	return os.Getenv("DATABASE_URL")
+	return databaseURL
+}
+
+func loadDotEnv() {
+	if os.Getenv("DATABASE_URL") != "" {
+		return
+	}
+
+	wd, err := os.Getwd()
+	if err != nil {
+		log.Printf("Could not determine working directory: %v", err)
+		return
+	}
+
+	for dir := wd; ; dir = filepath.Dir(dir) {
+		envPath := filepath.Join(dir, ".env")
+		if _, err := os.Stat(envPath); err == nil {
+			if err := godotenv.Load(envPath); err != nil {
+				log.Fatalf("Error loading .env file from %s: %v", envPath, err)
+			}
+			return
+		}
+
+		parent := filepath.Dir(dir)
+		if parent == dir {
+			return
+		}
+	}
 }
