@@ -1,11 +1,12 @@
 package handlers
 
 import (
+	"database/sql"
 	"encoding/json"
-	"fmt"
 	"juel-ratings-api/internal/store"
 	"log"
 	"net/http"
+	"strconv"
 )
 
 type TeamsServer struct {
@@ -33,6 +34,29 @@ func (ts *TeamsServer) GetAllTeamsHandler() http.Handler {
 
 func (ts *TeamsServer) GetTeamByIDHandler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintln(w, "Team by Id")
+		idStr := r.PathValue("id")
+		id, err := strconv.Atoi(idStr)
+		if err != nil {
+			http.Error(w, "Invalid team id", http.StatusBadRequest)
+			return
+		}
+
+		team, err := ts.Store.GetTeamById(id)
+		if err != nil {
+			if err == sql.ErrNoRows {
+				http.Error(w, "Team not found", http.StatusNotFound)
+				return
+			}
+
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		if err := json.NewEncoder(w).Encode(team); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		log.Printf("Successfully returned team: %s", team.School)
 	})
 }

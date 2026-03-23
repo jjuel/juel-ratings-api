@@ -2,7 +2,6 @@ package main
 
 import (
 	"database/sql"
-	"fmt"
 	"juel-ratings-api/internal/handlers"
 	"juel-ratings-api/internal/store"
 	"log"
@@ -28,13 +27,7 @@ func main() {
 
 func handleTeams(mux *http.ServeMux, ts *handlers.TeamsServer) {
 	mux.Handle("GET /teams", ts.GetAllTeamsHandler())
-	mux.Handle("GET /teams/{id}", somethingHandler())
-}
-
-func somethingHandler() http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintln(w, "This is something.")
-	})
+	mux.Handle("GET /teams/{id}", ts.GetTeamByIDHandler())
 }
 
 func dbConnect(url string) *sql.DB {
