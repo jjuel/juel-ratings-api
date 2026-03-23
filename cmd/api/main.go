@@ -2,12 +2,13 @@ package main
 
 import (
 	"database/sql"
-	"juel-ratings-api/internal/handlers"
-	"juel-ratings-api/internal/store"
 	"log"
 	"net/http"
 	"os"
 	"path/filepath"
+
+	"juel-ratings-api/internal/handlers"
+	"juel-ratings-api/internal/store"
 
 	"github.com/joho/godotenv"
 	_ "github.com/mattn/go-sqlite3"
@@ -19,8 +20,13 @@ func main() {
 	db := dbConnect(getDatabaseURL())
 	log.Printf("Connected to database")
 	store := store.NewStore(db)
+
 	teamServer := &handlers.TeamsServer{Store: store}
 	handleTeams(mux, teamServer)
+
+	ratingsServer := &handlers.RatingsServer{Store: store}
+	handleRatings(mux, ratingsServer)
+
 	log.Printf("Server starting on :8080")
 	log.Fatal(http.ListenAndServe(":8080", mux))
 }
@@ -28,6 +34,10 @@ func main() {
 func handleTeams(mux *http.ServeMux, ts *handlers.TeamsServer) {
 	mux.Handle("GET /teams", ts.GetAllTeamsHandler())
 	mux.Handle("GET /teams/{id}", ts.GetTeamByIDHandler())
+}
+
+func handleRatings(mux *http.ServeMux, rs *handlers.RatingsServer) {
+	mux.Handle("GET /ratings/{year}/{week}", rs.GetRatingsByYearAndWeekHandler())
 }
 
 func dbConnect(url string) *sql.DB {
