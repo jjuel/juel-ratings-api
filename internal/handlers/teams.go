@@ -3,10 +3,11 @@ package handlers
 import (
 	"database/sql"
 	"encoding/json"
-	"juel-ratings-api/internal/store"
 	"log"
 	"net/http"
 	"strconv"
+
+	"juel-ratings-api/internal/store"
 )
 
 type TeamsServer struct {
@@ -41,7 +42,7 @@ func (ts *TeamsServer) GetTeamByIDHandler() http.Handler {
 			return
 		}
 
-		team, err := ts.Store.GetTeamById(id)
+		team, err := ts.Store.GetTeamByID(id)
 		if err != nil {
 			if err == sql.ErrNoRows {
 				http.Error(w, "Team not found", http.StatusNotFound)

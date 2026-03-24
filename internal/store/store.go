@@ -2,8 +2,9 @@ package store
 
 import (
 	"database/sql"
-	"juel-ratings-api/internal/models"
 	"log"
+
+	"juel-ratings-api/internal/models"
 )
 
 type Store struct {
@@ -57,7 +58,7 @@ func (s *Store) GetAllTeams() ([]models.Team, error) {
 	return teams, nil
 }
 
-func (s *Store) GetTeamById(id int) (models.Team, error) {
+func (s *Store) GetTeamByID(id int) (models.Team, error) {
 	log.Printf("Fetching team by id: %d", id)
 	query := `
 		SELECT id, cfbd_id, school, mascot, abbreviation, conference, division, classification, city, state 
@@ -89,4 +90,66 @@ func (s *Store) GetTeamById(id int) (models.Team, error) {
 
 	log.Printf("Successfully fetched team with id: %d from db", id)
 	return team, nil
+}
+
+func (s *Store) GetRatingsByYearAndWeek(year int, week int) ([]models.TeamRating, error) {
+	query := `
+		SELECT
+			tr.snapshot_id,
+			tr.team,
+			tr.classification,
+			tr.conference,
+			tr.games,
+			tr.drives_per_game,
+			tr.off_rating,
+			tr.def_rating,
+			tr.sp_efficiency,
+			tr.massey_results,
+			tr.blended_rating,
+			tr.rank,
+			tr.success_rate,
+			tr.explosiveness,
+			tr.sp_component,
+			tr.massey_component
+		FROM team_ratings tr
+		JOIN rating_snapshots rs ON rs.id = tr.snapshot_id
+		WHERE rs.season = ?
+		  AND rs.through_week = ?
+		ORDER BY tr.rank ASC, tr.team ASC
+	`
+	rows, err := s.db.Query(query, year, week)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var ratings []models.TeamRating
+	for rows.Next() {
+		var r models.TeamRating
+		err := rows.Scan(
+			&r.SnapshotID,
+			&r.Team,
+			&r.Classification,
+			&r.Conference,
+			&r.Games,
+			&r.DrivesPerGame,
+			&r.OffRating,
+			&r.DefRating,
+			&r.SPEfficiency,
+			&r.MasseyResults,
+			&r.BlendedRating,
+			&r.Rank,
+			&r.SuccessRate,
+			&r.Explosiveness,
+			&r.SPComponent,
+			&r.MasseyComponent,
+		)
+		if err != nil {
+			return nil, err
+		}
+		ratings = append(ratings, r)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return ratings, nil
 }
